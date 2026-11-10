@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Alimentos Pro - Sistema de Gestão Interna</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col md:flex-row antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- SIDEBAR NAV -->
+    <aside id="sidebar" class="w-full md:w-64 bg-slate-950 border-r border-slate-800 flex-shrink-0 flex flex-col justify-between z-30 transition-all duration-300">
+        <div>
+            <!-- Logo Header -->
+            <div class="p-5 flex items-center justify-between border-b border-slate-800/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base leading-none text-white">NutriDistribuidora</h1>
+                        <span class="text-[10px] text-brand-400 font-semibold uppercase tracking-wider">Gestão ERP Web</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perfil de Usuário / Simulação de Permissão -->
+            <div class="px-4 py-3 mx-3 my-3 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+                <div class="text-slate-400 mb-1 flex items-center justify-between">
+                    <span>Nível de Acesso:</span>
+                    <i class="fa-solid fa-shield-halved text-brand-400"></i>
+                </div>
+                <select id="userRoleSelect" onchange="changeRole(this.value)" class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg p-1.5 focus:outline-none focus:border-brand-500 font-medium">
+                    <option value="admin">Administrador (Acesso Total)</option>
+                    <option value="estoque">Gerente de Estoque</option>
+                    <option value="vendas">Equipe de Vendas</option>
+                    <option value="financeiro">Financeiro / Contabilidade</option>
+                </select>
+            </div>
+
+            <!-- Navegação Principal -->
+            <nav class="px-3 space-y-1 text-sm font-medium">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-brand-400 bg-brand-500/10 border border-brand-500/20 font-semibold transition-all">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard & KPIs</span>
+                </button>
+                
+                <button onclick="switchTab('estoque')" id="nav-estoque" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                        <span>Estoque & Alertas</span>
+                    </div>
+                    <span class="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full font-bold border border-red-500/30">3 CRÍTICOS</span>
+                </button>
+
+                <button onclick="switchTab('vendas')" id="nav-vendas" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all">
+                    <i class="fa-solid fa-cart-shopping w-5 text-center"></i>
+                    <span>Vendas & Pedidos</span>
+                </button>
+
+                <button onclick="switchTab('financeiro')" id="nav-financeiro" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i>
+                    <span>Financeiro & DRE</span>
+                </button>
+
+                <button onclick="switchTab('cadastros')" id="nav-cadastros" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    <span>Clientes & Fornecedores</span>
+                </button>
+
+                <button onclick="switchTab('migracao')" id="nav-migracao" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-all">
+                    <i class="fa-solid fa-file-excel w-5 text-center text-emerald-500"></i>
+                    <span>Importar Excel</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Footer Sidebar -->
+        <div class="p-4 border-t border-slate-800/80 text-xs text-slate-500">
+            <div class="flex items-center justify-between mb-2">
+                <span>Status da API:</span>
+                <span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Node.js / Postgres
+                </span>
+            </div>
+            <p className="text-[11px]">Empresa: Distribuidora Alimentos (45 func.)</p>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+        <!-- TOP BAR -->
+        <header class="h-16 border-b border-slate-800 bg-slate-950/70 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <h2 id="pageTitle" class="text-lg font-bold text-white">Dashboard Gerencial</h2>
+                <span className="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg border border-slate-700 hidden sm:inline-block">
+                    Atualizado em tempo real
+                </span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Search global -->
+                <div class="relative hidden sm:block">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" placeholder="Buscar pedidos, produtos..." class="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 w-48 lg:w-64">
+                </div>
+
+                <!-- Notificações -->
+                <button onclick="toggleAlertsModal()" class="relative p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">3</span>
+                </button>
+
+                <!-- User profile avatar -->
+                <div class="flex items-center gap-2 border-l border-slate-800 pl-4">
+                    <div class="w-8 h-8 rounded-full bg-brand-600 text-slate-950 font-extrabold text-xs flex items-center justify-center">
+                        EC
+                    </div>
+                    <div class="hidden md:block text-left text-xs">
+                        <div class="font-bold text-slate-200">Eduardo Costa</div>
+                        <div class="text-[10px] text-slate-400" id="currentRoleLabel">Gerente Geral</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTAINER SEÇÕES INTERATIVAS -->
+        <div class="p-6 space-y-6">
+
+            <!-- ================= TAB 1: DASHBOARD ================= -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                
+                <!-- CARDS KPIS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- KPI 1 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition shadow-sm">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-3">
+                            <span>Faturamento do Mês</span>
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                <i class="fa-solid fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-white">R$ 485.620,00</div>
+                        <div class="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up"></i> +14.2% <span class="text-slate-500">vs mês anterior</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition shadow-sm">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-3">
+                            <span>Alertas de Estoque</span>
+                            <div class="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-red-400">3 Produtos</div>
+                        <div class="mt-2 text-xs text-red-400 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i> Abaixo do estoque mínimo
+                        </div>
+                    </div>
+
+                    <!-- KPI 3 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition shadow-sm">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-3">
+                            <span>Pedidos no Mês</span>
+                            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                                <i class="fa-solid fa-boxes-packing"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-white">1.248</div>
+                        <div class="mt-2 text-xs text-blue-400 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up"></i> +8.5% novos pedidos
+                        </div>
+                    </div>
+
+                    <!-- KPI 4 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition shadow-sm">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-3">
+                            <span>Ticket Médio por Venda</span>
+                            <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-black text-white">R$ 389,10</div>
+                        <div class="mt-2 text-xs text-purple-400 flex items-center gap-1">
+                            <i class="fa-solid fa-check"></i> Margem média de 28.5%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICOS PRINCIPAIS -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Gráfico Fluxo de Caixa -->
+                    <div class="lg:col-span-8 bg-slate-950 border border-slate-800 rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="font-bold text-white text-base">Fluxo de Caixa & Projeção</h3>
+                                <p class="text-xs text-slate-400">Entradas e saídas de capital nos últimos 6 meses</p>
+                            </div>
+                            <span class="text-xs font-mono bg-slate-900 border border-slate-800 text-brand-400 px-3 py-1 rounded-lg">Realizado vs Meta</span>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Ranking Produtos Mais Vendidos -->
+                    <div class="lg:col-span-4 bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-white text-base">Top 4 Produtos</h3>
+                                <span class="text-xs text-slate-400">Volume (Kg/Un)</span>
+                            </div>
+                            <div class="space-y-4 text-xs">
+                                <!-- Produto 1 -->
+                                <div>
+                                    <div class="flex justify-between text-slate-300 font-semibold mb-1">
+                                        <span>Arroz Tipo 1 (Saco 5kg)</span>
+                                        <span>4.200 un</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 rounded-full h-2">
+                                        <div class="bg-brand-500 h-2 rounded-full" style="width: 88%"></div>
+                                    </div>
+                                </div>
+                                <!-- Produto 2 -->
+                                <div>
+                                    <div class="flex justify-between text-slate-300 font-semibold mb-1">
+                                        <span>Óleo de Soja 900ml</span>
+                                        <span>3.850 un</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 rounded-full h-2">
+                                        <div class="bg-emerald-400 h-2 rounded-full" style="width: 76%"></div>
+                                    </div>
+                                </div>
+                                <!-- Produto 3 -->
+                                <div>
+                                    <div class="flex justify-between text-slate-300 font-semibold mb-1">
+                                        <span>Feijão Carioca 1kg</span>
+                                        <span>2.900 un</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 rounded-full h-2">
+                                        <div class="bg-blue-400 h-2 rounded-full" style="width: 62%"></div>
+                                    </div>
+                                </div>
+                                <!-- Produto 4 -->
+                                <div>
+                                    <div class="flex justify-between text-slate-300 font-semibold mb-1">
+                                        <span>Açúcar Refinado 1kg</span>
+                                        <span>2.100 un</span>
+                                    </div>
+                                    <div class="w-full bg-slate-900 rounded-full h-2">
+                                        <div class="bg-purple-400 h-2 rounded-full" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="switchTab('estoque')" class="w-full mt-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl border border-slate-800 transition">
+                            Ver Relatório Completo de Estoque <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- ================= TAB 2: CONTROLE DE ESTOQUE ================= -->
+            <section id="tab-estoque" class="tab-content hidden space-y-6">
+                
+                <!-- Barra de Ações & Alerta Crítico -->
+                <div class="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400 font-bold shrink-0">
+                            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-white">Alerta de Reposição Urgente</h4>
+                            <p class="text-xs text-red-300/80">3 itens atingiram o limite mínimo cadastrado. Faça o pedido de compra para evitar desabastecimento.</p>
+                        </div>
+                    </div>
+                    <button onclick="filtrarEstoqueCritico()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold text-xs rounded-xl shadow-md transition shrink-0">
+                        Filtrar Itens Críticos
+                    </button>
+                </div>
+
+                <!-- Tabela de Produtos -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-1 sm:w-72">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                                <input type="text" id="searchEstoque" onkeyup="buscarEstoque()" placeholder="Buscar por código ou nome do produto..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            </div>
+                            <button onclick="resetEstoque()" class="px-3 py-1.5 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs border border-slate-800">
+                                Limpar Filtros
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button onclick="openModalNovoProduto()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 transition flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Cadastrar Novo Produto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+                                <tr>
+                                    <th class="p-4">SKU / Código</th>
+                                    <th class="p-4">Produto</th>
+                                    <th class="p-4">Categoria</th>
+                                    <th class="p-4">Qtd. Atual</th>
+                                    <th class="p-4">Estoque Mín.</th>
+                                    <th class="p-4">Preço Venda</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estoqueTableBody" class="divide-y divide-slate-800/60">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- ================= TAB 3: VENDAS & PEDIDOS ================= -->
+            <section id="tab-vendas" class="tab-content hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white">Central de Pedidos e Vendas</h3>
+                        <p class="text-xs text-slate-400">Acompanhamento de pedidos emitidos pelos vendedores externos</p>
+                    </div>
+                    <button onclick="alert('Módulo de Emissão de Pedido aberto!')" class="px-4 py-2 bg-brand-600 text-slate-950 font-bold text-xs rounded-xl shadow-md">
+                        <i class="fa-solid fa-cart-plus mr-1"></i> Novo Pedido de Venda
+                    </button>
+                </div>
+
+                <!-- Tabela Pedidos -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900 text-slate-400 font-semibold uppercase border-b border-slate-800">
+                                <tr>
+                                    <th class="p-4">Nº Pedido</th>
+                                    <th class="p-4">Cliente (Razão Social)</th>
+                                    <th class="p-4">Data</th>
+                                    <th class="p-4">Itens</th>
+                                    <th class="p-4">Valor Total</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60">
+                                <tr>
+                                    <td class="p-4 font-mono text-brand-400 font-bold">#PED-8842</td>
+                                    <td class="p-4 font-semibold text-white">Supermercado Silva & Filhos</td>
+                                    <td class="p-4">10/11/2026</td>
+                                    <td class="p-4">120 cx Arroz, 50 cx Feijão</td>
+                                    <td class="p-4 font-bold text-white">R$ 14.850,00</td>
+                                    <td class="p-4"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold">Faturado</span></td>
+                                    <td class="p-4 text-right">
+                                        <button class="px-2.5 py-1 bg-slate-900 text-slate-300 hover:text-white rounded-lg border border-slate-800">Detalhes</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-mono text-brand-400 font-bold">#PED-8841</td>
+                                    <td class="p-4 font-semibold text-white">Mercearia Santo Antônio</td>
+                                    <td class="p-4">10/11/2026</td>
+                                    <td class="p-4">30 cx Óleo Soja</td>
+                                    <td class="p-4 font-bold text-white">R$ 2.940,00</td>
+                                    <td class="p-4"><span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-full font-semibold">Em Separação</span></td>
+                                    <td class="p-4 text-right">
+                                        <button class="px-2.5 py-1 bg-slate-900 text-slate-300 hover:text-white rounded-lg border border-slate-800">Detalhes</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 font-mono text-brand-400 font-bold">#PED-8840</td>
+                                    <td class="p-4 font-semibold text-white">Atacadão do Bairro LTDA</td>
+                                    <td class="p-4">09/11/2026</td>
+                                    <td class="p-4">400 fardos Açúcar Refinado</td>
+                                    <td class="p-4 font-bold text-white">R$ 32.100,00</td>
+                                    <td class="p-4"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold">Entregue</span></td>
+                                    <td class="p-4 text-right">
+                                        <button class="px-2.5 py-1 bg-slate-900 text-slate-300 hover:text-white rounded-lg border border-slate-800">Detalhes</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ================= TAB 4: FINANCEIRO & DRE ================= -->
+            <section id="tab-financeiro" class="tab-content hidden space-y-6">
+                
+                <!-- DRE Demonstrativo do Resultado -->
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white">Demonstrativo do Resultado do Exercício (DRE Sintético)</h3>
+                            <p class="text-xs text-slate-400">Consolidado Financeiro Automático</p>
+                        </div>
+                        <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/20">Competência: Novembro/2026</span>
+                    </div>
+
+                    <div class="space-y-3 text-xs font-mono">
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-xl">
+                            <span class="text-slate-300 font-semibold">(+) Receita Bruta de Vendas</span>
+                            <span class="text-emerald-400 font-bold text-sm">R$ 485.620,00</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl text-slate-400">
+                            <span>(-) Impostos sobre Vendas e Devoluções (12%)</span>
+                            <span class="text-red-400">- R$ 58.274,40</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-xl">
+                            <span class="text-slate-200 font-semibold">(=) Receita Líquida</span>
+                            <span class="text-white font-bold">R$ 427.345,60</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl text-slate-400">
+                            <span>(-) Custo dos Produtos Vendidos (CPV)</span>
+                            <span class="text-red-400">- R$ 285.400,00</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl font-sans">
+                            <span class="text-brand-400 font-bold">(=) Lucro Bruto (Margem 33.1%)</span>
+                            <span class="text-brand-400 font-extrabold text-base">R$ 141.945,60</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contas a Pagar / Receber Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Contas a Pagar -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
+                        <h4 class="font-bold text-white text-sm mb-4 flex items-center justify-between">
+                            <span>Contas a Pagar (Próximos 7 dias)</span>
+                            <span class="text-xs text-red-400 font-bold">Total: R$ 42.180,00</span>
+                        </h4>
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                                <div>
+                                    <div class="font-bold text-white">Moinho Sul Alimentos SA</div>
+                                    <div class="text-[10px] text-slate-400">Vencimento: 12/11/2026</div>
+                                </div>
+                                <span class="font-bold text-red-400">R$ 28.500,00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                                <div>
+                                    <div class="font-bold text-white">Distribuidora de Energia (Luz/Fabrica)</div>
+                                    <div class="text-[10px] text-slate-400">Vencimento: 15/11/2026</div>
+                                </div>
+                                <span class="font-bold text-red-400">R$ 13.680,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contas a Receber -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
+                        <h4 class="font-bold text-white text-sm mb-4 flex items-center justify-between">
+                            <span>Contas a Receber (Próximos 7 dias)</span>
+                            <span class="text-xs text-emerald-400 font-bold">Total: R$ 89.400,00</span>
+                        </h4>
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                                <div>
+                                    <div class="font-bold text-white">Rede de Supermercados BH</div>
+                                    <div class="text-[10px] text-slate-400">Vencimento: 13/11/2026</div>
+                                </div>
+                                <span class="font-bold text-emerald-400">R$ 54.000,00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                                <div>
+                                    <div class="font-bold text-white">Atacado Central Ltda</div>
+                                    <div class="text-[10px] text-slate-400">Vencimento: 14/11/2026</div>
+                                </div>
+                                <span class="font-bold text-emerald-400">R$ 35.400,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- ================= TAB 5: CLIENTES & FORNECEDORES ================= -->
+            <section id="tab-cadastros" class="tab-content hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-white">Cadastro Unificado de Parceiros</h3>
+                    <button class="px-4 py-2 bg-brand-600 text-slate-950 font-bold text-xs rounded-xl">
+                        <i class="fa-solid fa-user-plus mr-1"></i> Cadastrar Cliente/Fornecedor
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Card Cliente Demo -->
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded-md border border-brand-500/20">CLIENTE VIP</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Supermercado Silva & Filhos Ltda</h4>
+                                <p class="text-xs text-slate-400">CNPJ: 12.345.678/0001-90</p>
+                            </div>
+                            <i class="fa-solid fa-store text-slate-600 text-xl"></i>
+                        </div>
+                        <div class="text-xs text-slate-300 space-y-1 pt-2 border-t border-slate-900">
+                            <div><i class="fa-solid fa-location-dot w-4 text-slate-500"></i> Av. Principal, 1200 - Centro, Montes Claros/MG</div>
+                            <div><i class="fa-solid fa-phone w-4 text-slate-500"></i> (38) 3221-9000</div>
+                            <div><i class="fa-solid fa-envelope w-4 text-slate-500"></i> compras@supermercadosilva.com.br</div>
+                        </div>
+                    </div>
+
+                    <!-- Card Fornecedor Demo -->
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">FORNECEDOR DIRETO</span>
+                                <h4 class="font-bold text-white text-sm mt-1">Moinho Sul Alimentos S.A.</h4>
+                                <p class="text-xs text-slate-400">CNPJ: 98.765.432/0001-10</p>
+                            </div>
+                            <i class="fa-solid fa-truck-field text-slate-600 text-xl"></i>
+                        </div>
+                        <div class="text-xs text-slate-300 space-y-1 pt-2 border-t border-slate-900">
+                            <div><i class="fa-solid fa-location-dot w-4 text-slate-500"></i> Rodovia BR 040, Km 450 - Dist. Industrial</div>
+                            <div><i class="fa-solid fa-phone w-4 text-slate-500"></i> (31) 3400-8800</div>
+                            <div><i class="fa-solid fa-envelope w-4 text-slate-500"></i> comercial@moinhosul.com.br</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ================= TAB 6: MIGRACÃO DE EXCEL ================= -->
+            <section id="tab-migracao" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 p-8 rounded-2xl max-w-3xl mx-auto text-center space-y-6">
+                    <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/20 text-2xl">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Importador Automático de Planilhas Excel</h3>
+                        <p class="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                            Arraste ou selecione suas planilhas legadas de produtos, clientes e histórico de estoque para conversão direta no banco PostgreSQL.
+                        </p>
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div class="border-2 border-dashed border-slate-800 hover:border-emerald-500/50 rounded-2xl p-8 bg-slate-900/50 cursor-pointer transition" onclick="simularUploadExcel()">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-3"></i>
+                        <p class="text-sm font-semibold text-slate-300">Clique para selecionar seu arquivo .XLSX ou .CSV</p>
+                        <p class="text-xs text-slate-500 mt-1">Suporta planilhas de produtos, preços e saldos de estoque</p>
+                    </div>
+
+                    <div id="uploadStatus" class="hidden p-4 rounded-xl bg-slate-900 border border-slate-800 text-left text-xs font-mono">
+                        <div class="flex justify-between text-emerald-400 font-bold mb-2">
+                            <span>Processando arquivo: "Estoque_Geral_2026.xlsx"</span>
+                            <span>100%</span>
+                        </div>
+                        <p class="text-slate-400">✓ 450 produtos identificados</p>
+                        <p class="text-slate-400">✓ Higienização e validação de SKUs concluída</p>
+                        <p class="text-slate-400">✓ Dados gravados com sucesso no banco de dados!</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL NOVO PRODUTO -->
+    <div id="modalNovoProduto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-base">Cadastrar Novo Produto</h3>
+                <button onclick="closeModalNovoProduto()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form onsubmit="salvarProduto(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Nome do Produto / Descrição</label>
+                    <input type="text" id="prodNome" required placeholder="Ex: Macarrão Espaguete 500g" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1">SKU / Código</label>
+                        <input type="text" id="prodSku" required placeholder="SKU-9901" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Categoria</label>
+                        <select id="prodCat" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                            <option>Grãos & Cereais</option>
+                            <option>Óleos & Enlatados</option>
+                            <option>Massas & Farinhas</option>
+                            <option>Açúcar & Adoçantes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Qtd Atual</label>
+                        <input type="number" id="prodQtd" required placeholder="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Estoque Mín.</label>
+                        <input type="number" id="prodMin" required placeholder="20" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Preço Venda (R$)</label>
+                        <input type="text" id="prodPreco" required placeholder="25,90" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeModalNovoProduto()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-brand-500/20">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NOTIFICAÇÕES E ALERTAS -->
+    <div id="modalAlertas" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bell text-brand-400"></i>
+                    <h3 class="font-bold text-white text-base">Alertas do Sistema</h3>
+                </div>
+                <button onclick="toggleAlertsModal()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-300">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
+                    <div>
+                        <div class="font-bold text-white">Feijão Carioca 1kg</div>
+                        <p class="text-[11px] text-red-300/80">Estoque atual (150 un) está abaixo do mínimo (300 un).</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-300">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
+                    <div>
+                        <div class="font-bold text-white">Açúcar Refinado 1kg</div>
+                        <p class="text-[11px] text-red-300/80">Estoque crítico! Apenas 80 unidades disponíveis.</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-3 text-yellow-300">
+                    <i class="fa-solid fa-circle-info text-yellow-400 mt-0.5"></i>
+                    <div>
+                        <div class="font-bold text-white">Farinha de Trigo Especial</div>
+                        <p class="text-[11px] text-yellow-300/80">Próximo do limite de reposição (180 un de 200 un).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleAlertsModal(); switchTab('estoque')" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold rounded-xl text-xs shadow-md">
+                    Ir para Gestão de Estoque
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Dados Iniciais de Estoque
+        let estoqueData = [
+            { sku: "SKU-1001", nome: "Arroz Tipo 1 Saco 5kg", cat: "Grãos & Cereais", qtd: 4200, min: 500, preco: "28,50", status: "OK" },
+            { sku: "SKU-1002", nome: "Feijão Carioca 1kg", cat: "Grãos & Cereais", qtd: 150, min: 300, preco: "8,90", status: "CRITICO" },
+            { sku: "SKU-1003", nome: "Óleo de Soja 900ml", cat: "Óleos & Enlatados", qtd: 3850, min: 800, preco: "6,80", status: "OK" },
+            { sku: "SKU-1004", name: "Açúcar Refinado 1kg", cat: "Açúcar & Adoçantes", qtd: 80, min: 200, preco: "4,20", status: "CRITICO" },
+            { sku: "SKU-1005", nome: "Farinha de Trigo Especial 1kg", cat: "Massas & Farinhas", qtd: 180, min: 200, preco: "5,40", status: "ALERTA" },
+            { sku: "SKU-1006", nome: "Leite UHT Integral 1L", cat: "Laticínios", qtd: 1200, min: 400, preco: "4,99", status: "OK" }
+        ];
+
+        // Renderizar Tabela de Estoque
+        function renderEstoque(data = estoqueData) {
+            const tbody = document.getElementById('estoqueTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                let badgeStatus = '';
+                if (item.qtd <= item.min) {
+                    badgeStatus = `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-bold">ESTOQUE CRÍTICO</span>`;
+                } else if (item.qtd <= item.min * 1.2) {
+                    badgeStatus = `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-bold">REPOSIÇÃO PRÓXIMA</span>`;
+                } else {
+                    badgeStatus = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">EM DIA</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-900/60 transition">
+                        <td class="p-4 font-mono text-brand-400 font-semibold">${item.sku}</td>
+                        <td class="p-4 font-bold text-white">${item.nome}</td>
+                        <td class="p-4 text-slate-400">${item.cat}</td>
+                        <td class="p-4 font-bold ${item.qtd <= item.min ? 'text-red-400' : 'text-slate-200'}">${item.qtd.toLocaleString('pt-BR')} un</td>
+                        <td class="p-4 text-slate-400">${item.min.toLocaleString('pt-BR')} un</td>
+                        <td class="p-4 font-bold text-white">R$ ${item.preco}</td>
+                        <td class="p-4">${badgeStatus}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="alert('Editar item ${item.sku}')" class="p-1.5 hover:text-brand-400 text-slate-500"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Navegação por Abas
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-brand-400', 'bg-brand-500/10', 'border', 'border-brand-500/20', 'font-semibold');
+                el.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-brand-400', 'bg-brand-500/10', 'border', 'border-brand-500/20', 'font-semibold');
+            }
+
+            // Atualiza Título
+            const titles = {
+                dashboard: 'Dashboard Gerencial',
+                estoque: 'Controle de Estoque & Reposição',
+                vendas: 'Vendas & Emissão de Pedidos',
+                financeiro: 'Financeiro, Contas & DRE',
+                cadastros: 'Clientes & Fornecedores',
+                migracao: 'Migração de Dados (Excel)'
+            };
+            document.getElementById('pageTitle').innerText = titles[tabId];
+        }
+
+        // Filtros e Buscas
+        function buscarEstoque() {
+            const query = document.getElementById('searchEstoque').value.toLowerCase();
+            const filtered = estoqueData.filter(i => i.nome.toLowerCase().includes(query) || i.sku.toLowerCase().includes(query));
+            renderEstoque(filtered);
+        }
+
+        function filtrarEstoqueCritico() {
+            switchTab('estoque');
+            const filtered = estoqueData.filter(i => i.qtd <= i.min);
+            renderEstoque(filtered);
+        }
+
+        function resetEstoque() {
+            document.getElementById('searchEstoque').value = '';
+            renderEstoque(estoqueData);
+        }
+
+        // Modais e Interações
+        function openModalNovoProduto() { document.getElementById('modalNovoProduto').classList.remove('hidden'); }
+        function closeModalNovoProduto() { document.getElementById('modalNovoProduto').classList.add('hidden'); }
+
+        function toggleAlertsModal() {
+            const modal = document.getElementById('modalAlertas');
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+
+        function salvarProduto(e) {
+            e.preventDefault();
+            const novo = {
+                sku: document.getElementById('prodSku').value,
+                nome: document.getElementById('prodNome').value,
+                cat: document.getElementById('prodCat').value,
+                qtd: parseInt(document.getElementById('prodQtd').value),
+                min: parseInt(document.getElementById('prodMin').value),
+                preco: document.getElementById('prodPreco').value
+            };
+            estoqueData.unshift(novo);
+            renderEstoque(estoqueData);
+            closeModalNovoProduto();
+            alert('Produto cadastrado com sucesso!');
+        }
+
+        function simularUploadExcel() {
+            document.getElementById('uploadStatus').classList.remove('hidden');
+        }
+
+        function changeRole(role) {
+            const roles = {
+                admin: 'Gerente Geral (Acesso Total)',
+                estoque: 'Operador de Almoxarifado',
+                vendas: 'Vendedor Externo',
+                financeiro: 'Analista Financeiro'
+            };
+            document.getElementById('currentRoleLabel').innerText = roles[role];
+        }
+
+        // Chart.js Grafico de Fluxo de Caixa
+        window.onload = function() {
+            renderEstoque();
+
+            const ctx = document.getElementById('cashflowChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro (Atual)'],
+                    datasets: [
+                        {
+                            label: 'Entradas (Faturamento R$)',
+                            data: [320000, 380000, 410000, 395000, 440000, 485620],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Saídas (Custos & Fornecedores R$)',
+                            data: [240000, 270000, 290000, 280000, 310000, 343674],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+                    },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
